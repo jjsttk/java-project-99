@@ -1,0 +1,53 @@
+name: Java CI
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+        #CloneRepo
+      - uses: actions/checkout@v4
+
+        #SetupJava
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+        
+        #SetupGradle  
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          build-root-directory: app
+          gradle-version: 8.7
+
+        #CheckstyleMain
+      - name: Gradle checkstyleMain
+        working-directory: app
+        run: ./gradlew checkstyleMain
+        
+        #CheckstyleTest
+      - name: Gradle checkstyleTest
+        working-directory: app
+        run: ./gradlew checkstyleTest
+
+        #GradleTest
+      - name: Gradle test
+        working-directory: app
+        run: ./gradlew test
+
+        #SendCodeCoverageToCodeClimate
+      - name: Publish code coverage
+        uses: paambaati/codeclimate-action@v9.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
+          JACOCO_SOURCE_PATH: ${{github.workspace}}/app/src/main/java
+        with:
+          workingDirectory: app
+          prefix: ${{github.workspace}}/app
+          coverageCommand: ./gradlew jacocoTestReport
+          coverageLocations: ${{github.workspace}}/app/build/reports/jacoco/test/jacocoTestReport.xml:jacoco
+          
