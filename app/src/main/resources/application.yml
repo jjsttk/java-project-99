@@ -5,3 +5,7 @@ spring:
       ddl-auto: update
   profiles:
     default: dev
+
+rsa:
+  private-key: classpath:certs/private.pem
+  public-key: classpath:certs/public.pem
