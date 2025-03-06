@@ -37,6 +37,7 @@ jobs:
         # Generate RSA private and public keys using OpenSSL
       - name: Generate RSA private and public keys
         run: |
+          mkdir -p app/src/main/resources/certs
           openssl genpkey -out app/src/main/resources/certs/private.pem -algorithm RSA -pkeyopt rsa_keygen_bits:2048
           openssl rsa -in app/src/main/resources/certs/private.pem -pubout -out app/src/main/resources/certs/public.pem
 

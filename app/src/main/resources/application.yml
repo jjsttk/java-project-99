@@ -9,3 +9,7 @@ spring:
 logging:
   level:
     org.springframework.security: DEBUG
+
+rsa:
+  private-key: classpath:certs/private.pem
+  public-key: classpath:certs/public.pem

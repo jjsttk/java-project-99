@@ -5,6 +5,3 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
-rsa:
-  private-key: ${RSA_PRIVATE_KEY}
-  public-key: ${RSA_PUBLIC_KEY}
