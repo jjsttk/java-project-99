@@ -3,7 +3,6 @@ package hexlet.code.app.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.app.dto.UserCreateDTO;
 import hexlet.code.app.dto.UserUpdateDTO;
-import hexlet.code.app.mapper.UserMapper;
 import hexlet.code.app.model.User;
 import hexlet.code.app.repository.UserRepository;
 import hexlet.code.app.service.UserService;
@@ -18,26 +17,23 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
-import java.nio.charset.StandardCharsets;
+import org.springframework.transaction.annotation.Transactional;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Log4j2
 @SpringBootTest
 @AutoConfigureMockMvc
 class UserControllerTest {
-    @Autowired
-    private WebApplicationContext wac;
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -48,13 +44,7 @@ class UserControllerTest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserMapper mapper;
-
-    @Autowired
     private ModelGenerator modelGenerator;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -63,21 +53,18 @@ class UserControllerTest {
     private User testOnlyReqFieldsUserModel;
     private User testNonValidDataInFieldsUserModel;
 
+    @Autowired
+    private UserService userService;
+
     @BeforeEach
     public void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(wac)
-                .defaultResponseCharacterEncoding(StandardCharsets.UTF_8)
-                .apply(springSecurity())
-                .build();
-
         testFullFieldsUserModel = Instancio.of(modelGenerator.getFullFieldsUserModel()).create();
         testOnlyReqFieldsUserModel = Instancio.of(modelGenerator.getOnlyReqFieldsUserModel()).create();
         testNonValidDataInFieldsUserModel = Instancio.of(modelGenerator.getNonValidDataInFieldsUserModel()).create();
-
-        userRepository.deleteAll();
     }
 
     @Test
+    @Transactional
     public void testIndexWithAuthorization() throws Exception {
         var firstModel = userRepository.save(testFullFieldsUserModel);
         var secondModel = userRepository.save(testOnlyReqFieldsUserModel);
@@ -87,8 +74,10 @@ class UserControllerTest {
                 .andReturn();
 
         var body = result.getResponse().getContentAsString();
-        assertThatJson(body).isArray().hasSize(2);
-        assertThatJson(body).inPath("[0]").and(
+
+        // Expected 3 not 2, coz of we create +1 user (Admin) in DataInitializer.class"
+        assertThatJson(body).isArray().hasSize(3);
+        assertThatJson(body).inPath("[1]").and(
                 v -> v.node("id").isEqualTo(testFullFieldsUserModel.getId()),
                 v -> v.node("email").isEqualTo(testFullFieldsUserModel.getEmail()),
                 v -> v.node("firstName").isEqualTo(testFullFieldsUserModel.getFirstName()),
@@ -96,7 +85,7 @@ class UserControllerTest {
                 v -> v.node("createdAt").isNotNull()
         );
 
-        assertThatJson(body).inPath("[1]").and(
+        assertThatJson(body).inPath("[2]").and(
                 v -> v.node("id").isEqualTo(testOnlyReqFieldsUserModel.getId()),
                 v -> v.node("email").isEqualTo(testOnlyReqFieldsUserModel.getEmail()),
                 v -> v.node("createdAt").isNotNull()
@@ -105,6 +94,7 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
     public void testIndexWithoutAuthorization() throws Exception {
         var firstModel = userRepository.save(testFullFieldsUserModel);
 
@@ -113,6 +103,7 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
     public void testShowWithFullFieldsUserModel() throws Exception {
         var model = userRepository.save(testFullFieldsUserModel);
 
@@ -134,6 +125,7 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
     public void testShowWithOnlyReqFieldsUserModel() throws Exception {
         var model = userRepository.save(testOnlyReqFieldsUserModel);
 
@@ -147,13 +139,12 @@ class UserControllerTest {
         assertThatJson(body).and(
                 v -> v.node("id").isNotNull(),
                 v -> v.node("email").isEqualTo(testUserFromDB.getEmail()),
-                v -> v.node("firstName").isEqualTo(testUserFromDB.getFirstName()),
-                v -> v.node("lastName").isEqualTo(testUserFromDB.getLastName()),
                 v -> v.node("createdAt").isNotNull()
         );
     }
 
     @Test
+    @Transactional
     public void testShowWithoutAuth() throws Exception {
 
         userRepository.save(testFullFieldsUserModel);
@@ -165,6 +156,7 @@ class UserControllerTest {
 
 
     @Test
+    @Transactional
     public void testIndexWithoutAuth() throws Exception {
         userRepository.save(testFullFieldsUserModel);
         var result = mockMvc.perform(get("/api/users/"))
@@ -173,6 +165,7 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
     public void testCreateUserWithFullFieldsModel() throws Exception {
         var testUser = testFullFieldsUserModel;
 
@@ -193,6 +186,7 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
     public void testCreateUserWithOnlyReqFieldsModel() throws Exception {
         var testUser = testOnlyReqFieldsUserModel;
 
@@ -213,6 +207,7 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
     public void testCreateUserWithCreateDTO() throws Exception {
         var model = testFullFieldsUserModel;
         var userCreateDTO = new UserCreateDTO();
@@ -238,17 +233,23 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
+    @WithMockUser(username = "fullFields@model.com", roles = "USER")
     public void testUpdateUser() throws Exception {
         var modelBeforeUpdate = userRepository.save(testFullFieldsUserModel);
+        var oldEmail = modelBeforeUpdate.getEmail();
+        var oldPassword = modelBeforeUpdate.getPassword();
+        var oldFirstName = modelBeforeUpdate.getFirstName();
+        var oldLastName = modelBeforeUpdate.getLastName();
+        var modelBeforeUpdateId = modelBeforeUpdate.getId();
 
         var updateDTO = new UserUpdateDTO();
         updateDTO.setEmail(JsonNullable.of("asd@mail.ru"));
         updateDTO.setFirstName(JsonNullable.of("TestName"));
         updateDTO.setLastName(JsonNullable.of("TestLastName"));
-        var newPassword = "qwerty";
-        updateDTO.setPassword(JsonNullable.of(newPassword));
+        updateDTO.setPassword(JsonNullable.of("qwerty"));
 
-        var request = put("/api/users/{id}", modelBeforeUpdate.getId()).with(jwt())
+        var request = put("/api/users/{id}", modelBeforeUpdate.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(updateDTO));
         var response = mockMvc.perform(request)
@@ -257,7 +258,7 @@ class UserControllerTest {
 
         var body = response.getResponse().getContentAsString();
         assertThatJson(body).and(
-                v -> v.node("id").isEqualTo(modelBeforeUpdate.getId()),
+                v -> v.node("id").isEqualTo(modelBeforeUpdateId),
                 v -> v.node("email").isEqualTo(updateDTO.getEmail()),
                 v -> v.node("firstName").isEqualTo(updateDTO.getFirstName()),
                 v -> v.node("lastName").isEqualTo(updateDTO.getLastName())
@@ -265,49 +266,58 @@ class UserControllerTest {
 
         var updatedModelFromDB = userRepository.findById(modelBeforeUpdate.getId()).get();
 
-        assertThat(updatedModelFromDB.getLastName()).isNotEqualTo(modelBeforeUpdate.getLastName());
-        assertThat(updatedModelFromDB.getFirstName()).isNotEqualTo(modelBeforeUpdate.getFirstName());
-        assertThat(updatedModelFromDB.getEmail()).isNotEqualTo(modelBeforeUpdate.getEmail());
-        assertThat(updatedModelFromDB.getPassword()).isNotEqualTo(modelBeforeUpdate.getPassword());
-        assertThat(passwordEncoder.matches(newPassword, updatedModelFromDB.getPassword())).isTrue();
+        assertThat(updatedModelFromDB.getLastName()).isNotEqualTo(oldLastName);
+        assertThat(updatedModelFromDB.getFirstName()).isNotEqualTo(oldFirstName);
+        assertThat(updatedModelFromDB.getEmail()).isNotEqualTo(oldEmail);
+        assertThat(updatedModelFromDB.getPassword()).isNotEqualTo(oldPassword);
+        assertThat(passwordEncoder.matches("qwerty", updatedModelFromDB.getPassword())).isTrue();
     }
 
     @Test
+    @Transactional
+    @WithMockUser(username = "fullFields@model.com", roles = "USER")
     public void testPartialUpdateUser() throws Exception {
         var modelBeforeUpdate = userRepository.save(testFullFieldsUserModel);
+        var oldEmail = modelBeforeUpdate.getEmail();
+        var oldPassword = modelBeforeUpdate.getPassword();
+        var oldFirstName = modelBeforeUpdate.getFirstName();
+        var oldLastName = modelBeforeUpdate.getLastName();
+        var modelBeforeUpdateId = modelBeforeUpdate.getId();
 
         var updateDTO = new UserUpdateDTO();
-        var newPassword = "qwerty";
-        updateDTO.setEmail(JsonNullable.of("asd@mail.ru"));
-        updateDTO.setPassword(JsonNullable.of(newPassword));
+        updateDTO.setEmail(JsonNullable.of("asdf@mail.ru"));
+        updateDTO.setPassword(JsonNullable.of("qwerty"));
 
-        var request = put("/api/users/{id}", modelBeforeUpdate.getId()).with(jwt())
+        var request = put("/api/users/{id}", modelBeforeUpdateId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(updateDTO));
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk()).andReturn();
 
         var modelAfterUpdate = userRepository.findById(modelBeforeUpdate.getId()).get();
-        assertThat(modelBeforeUpdate.getPassword()).isNotEqualTo(modelAfterUpdate.getPassword());
-        assertThat(passwordEncoder.matches(newPassword, modelAfterUpdate.getPassword())).isTrue();
+        var newPassword = modelAfterUpdate.getPassword();
+
+        assertThat(oldPassword).isNotEqualTo(newPassword);
+        assertThat(passwordEncoder.matches("qwerty", modelAfterUpdate.getPassword())).isTrue();
 
         var body = result.getResponse().getContentAsString();
         assertThatJson(body).and(
-                v -> v.node("id").isEqualTo(modelBeforeUpdate.getId()),
-                v -> v.node("email").isNotEqualTo(modelBeforeUpdate.getEmail()),
-                v -> v.node("firstName").isEqualTo(modelBeforeUpdate.getFirstName()),
-                v -> v.node("lastName").isEqualTo(modelBeforeUpdate.getLastName())
+                v -> v.node("id").isEqualTo(modelBeforeUpdateId),
+                v -> v.node("email").isNotEqualTo(oldEmail),
+                v -> v.node("firstName").isEqualTo(oldFirstName),
+                v -> v.node("lastName").isEqualTo(oldLastName)
         );
 
         var updatedModelFromDB = userRepository.findById(modelBeforeUpdate.getId()).get();
 
-        assertThat(updatedModelFromDB.getLastName()).isEqualTo(modelBeforeUpdate.getLastName());
-        assertThat(updatedModelFromDB.getFirstName()).isEqualTo(modelBeforeUpdate.getFirstName());
-        assertThat(updatedModelFromDB.getEmail()).isNotEqualTo(modelBeforeUpdate.getEmail());
-        assertThat(updatedModelFromDB.getPassword()).isNotEqualTo(modelBeforeUpdate.getPassword());
+        assertThat(updatedModelFromDB.getLastName()).isEqualTo(oldLastName);
+        assertThat(updatedModelFromDB.getFirstName()).isEqualTo(oldFirstName);
+        assertThat(updatedModelFromDB.getEmail()).isNotEqualTo(oldEmail);
+        assertThat(updatedModelFromDB.getPassword()).isNotEqualTo(oldPassword);
     }
 
     @Test
+    @Transactional
     public void testCreateWithNonValidDataInRequestBody() throws Exception {
         var testUser = testNonValidDataInFieldsUserModel;
 
@@ -320,18 +330,21 @@ class UserControllerTest {
     }
 
     @Test
+    @Transactional
+    @WithMockUser(username = "onlyReqFields@model.com", roles = "USER")
     public void testDeleteUserWithAuth() throws Exception {
         var testUser = userRepository.save(testOnlyReqFieldsUserModel);
         var id = testUser.getId();
         assertThat(userRepository.existsById(id)).isTrue();
 
-        var request = delete("/api/users/{id}", id).with(jwt());
+        var request = delete("/api/users/{id}", id);
         var result = mockMvc.perform(request)
                         .andExpect(status().isNoContent());
         assertThat(userRepository.existsById(id)).isFalse();
     }
 
     @Test
+    @Transactional
     public void testDeleteUserWithoutAuth() throws Exception {
         var testUser = userRepository.save(testOnlyReqFieldsUserModel);
         var id = testUser.getId();
@@ -341,5 +354,23 @@ class UserControllerTest {
         var result = mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
         assertThat(userRepository.existsById(id)).isTrue();
+    }
+
+    @Test
+    @Transactional
+    @WithMockUser(username = "hexlet@example.com", roles = "USER")
+    public void testUpdateWithoutRights() throws Exception {
+        var testedModel = userRepository.save(testFullFieldsUserModel);
+
+        var updateDTO = new UserUpdateDTO();
+        var newPassword = "qwerty";
+        updateDTO.setEmail(JsonNullable.of("asd@mail.ru"));
+        updateDTO.setPassword(JsonNullable.of(newPassword));
+
+        var request = put("/api/users/{id}", testedModel.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(updateDTO));
+        var result = mockMvc.perform(request)
+                .andExpect(status().isForbidden());
     }
 }

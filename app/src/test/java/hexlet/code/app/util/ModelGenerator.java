@@ -32,7 +32,7 @@ public class ModelGenerator {
                 .ignore(Select.field(User::getId))
                 .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
                 .supply(Select.field(User::getLastName), () -> faker.name().lastName())
-                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
+                .supply(Select.field(User::getEmail), () -> "fullFields@model.com")
                 .supply(Select.field(User::getPassword), () -> faker.internet().password(3, 100))
                 .toModel();
     }
@@ -40,7 +40,7 @@ public class ModelGenerator {
     private Model<User> buildOnlyReqFieldsUserModel() {
         return Instancio.of(User.class)
                 .ignore(Select.field(User::getId))
-                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
+                .supply(Select.field(User::getEmail), () -> "onlyReqFields@model.com")
                 .supply(Select.field(User::getPassword), () -> faker.internet().password(3, 100))
                 .toModel();
     }
