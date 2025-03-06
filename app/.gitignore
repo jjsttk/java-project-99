@@ -1,6 +1,6 @@
 
-### PRIVATE KEYS ###
-**/resources/certs/**
+### KEYS ###
+**/resources/certs/
 
 HELP.md
 .gradle

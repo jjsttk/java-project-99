@@ -3,10 +3,12 @@ package hexlet.code.app.controller.api;
 import hexlet.code.app.dto.UserCreateDTO;
 import hexlet.code.app.dto.UserDTO;
 import hexlet.code.app.dto.UserUpdateDTO;
+import hexlet.code.app.repository.UserRepository;
 import hexlet.code.app.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +27,7 @@ import java.util.List;
 @AllArgsConstructor
 public class UserController {
     private final UserService service;
+    private final UserRepository userRepository;
 
     /**
      * Get a list of all users.
@@ -32,8 +35,11 @@ public class UserController {
      * @return a list of all users as {@link UserDTO}
      */
     @GetMapping("/users")
-    public List<UserDTO> index() {
-        return service.getEntities();
+    public ResponseEntity<List<UserDTO>> index() {
+        var users = service.getEntities();
+        var count = userRepository.count();
+        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(count))
+                .body(service.getEntities());
     }
 
     /**

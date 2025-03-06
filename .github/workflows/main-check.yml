@@ -34,6 +34,12 @@ jobs:
         working-directory: app
         run: ./gradlew checkstyleTest
 
+        # Generate RSA private and public keys using OpenSSL
+      - name: Generate RSA private and public keys
+        run: |
+          openssl genpkey -out app/src/main/resources/certs/private.pem -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+          openssl rsa -in app/src/main/resources/certs/private.pem -pubout -out app/src/main/resources/certs/public.pem
+
         #GradleTest
       - name: Gradle test
         working-directory: app
