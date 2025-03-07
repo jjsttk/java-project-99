@@ -1,6 +1,6 @@
 package hexlet.code.app.service.security;
 
-import hexlet.code.app.dto.auth.AuthRequest;
+import hexlet.code.app.dto.security.AuthRequest;
 import hexlet.code.app.utils.JWTUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;

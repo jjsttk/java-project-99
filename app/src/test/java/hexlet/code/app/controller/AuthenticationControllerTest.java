@@ -1,7 +1,7 @@
 package hexlet.code.app.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hexlet.code.app.dto.auth.AuthRequest;
+import hexlet.code.app.dto.security.AuthRequest;
 import hexlet.code.app.repository.UserRepository;
 import hexlet.code.app.util.ModelGenerator;
 import lombok.extern.log4j.Log4j2;

@@ -1,6 +1,6 @@
 package hexlet.code.app.controller.api;
 
-import hexlet.code.app.dto.auth.AuthRequest;
+import hexlet.code.app.dto.security.AuthRequest;
 import hexlet.code.app.service.security.AuthenticationService;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;

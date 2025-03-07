@@ -1,4 +1,4 @@
-package hexlet.code.app.config;
+package hexlet.code.app.config.security;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;

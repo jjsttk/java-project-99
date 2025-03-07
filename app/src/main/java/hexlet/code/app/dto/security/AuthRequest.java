@@ -1,4 +1,4 @@
-package hexlet.code.app.dto.auth;
+package hexlet.code.app.dto.security;
 
 import lombok.Data;
 
