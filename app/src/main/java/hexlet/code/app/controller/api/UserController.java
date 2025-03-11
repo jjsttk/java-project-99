@@ -3,7 +3,6 @@ package hexlet.code.app.controller.api;
 import hexlet.code.app.dto.user.UserCreateDTO;
 import hexlet.code.app.dto.user.UserDTO;
 import hexlet.code.app.dto.user.UserUpdateDTO;
-import hexlet.code.app.repository.UserRepository;
 import hexlet.code.app.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -22,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * REST controller for managing users.
+ */
 @RestController
 @RequestMapping("/api")
 @AllArgsConstructor
@@ -29,34 +31,37 @@ public class UserController {
     private final UserService service;
 
     /**
-     * Get a list of all users.
+     * Retrieves a list of all users.
      *
-     * @return a list of all users as {@link UserDTO}
+     * @return A list of UserDTO objects and the total count in the response header.
      */
     @GetMapping("/users")
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<UserDTO>> index() {
         var users = service.getAll();
         var count = service.totalCount();
-        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(count))
-                .body(service.getAll());
+        return ResponseEntity.ok()
+                .header("X-Total-Count", String.valueOf(count))
+                .body(users);
     }
 
     /**
-     * Get user information by their ID.
+     * Retrieves a user by ID.
      *
-     * @param id the ID of the user to retrieve
-     * @return a {@link UserDTO} object representing the user
+     * @param id The ID of the user.
+     * @return The UserDTO object.
      */
     @GetMapping("/users/{id}")
+    @ResponseStatus(HttpStatus.OK)
     public UserDTO show(@PathVariable Long id) {
-        return service.getUserById(id);
+        return service.getById(id);
     }
 
     /**
-     * Create a new user.
+     * Creates a new user.
      *
-     * @param createDTO the data transfer object containing the details of the user to be created
-     * @return a {@link UserDTO} object representing the created user
+     * @param createDTO The user creation DTO containing the necessary data.
+     * @return The created UserDTO object.
      */
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
@@ -65,30 +70,29 @@ public class UserController {
     }
 
     /**
-     * Update an existing user's data.
+     * Updates an existing user.
      *
-     * @param id the ID of the user to update
-     * @param updateDTO the data transfer object containing the updated details of the user
-     * @return a {@link UserDTO} object representing the updated user
+     * @param id The ID of the user to update.
+     * @param updateDTO The DTO containing updated user data.
+     * @return The updated UserDTO object.
      */
     @PutMapping("/users/{id}")
-    @PreAuthorize("@userSecurityService.getCurrentUser().id == #id or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@userSecurityService.getCurrentUser().id == #id or hasRole('ADMIN')")
     public UserDTO update(@PathVariable Long id,
                           @RequestBody @Valid UserUpdateDTO updateDTO) {
         return service.update(updateDTO, id);
     }
 
     /**
-     * Delete a user.
+     * Deletes a user by ID.
      *
-     * @param id the ID of the user to delete
+     * @param id The ID of the user to delete.
      */
     @DeleteMapping("/users/{id}")
     @PreAuthorize("@userSecurityService.getCurrentUser().id == #id or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        var mbUser = service.getUserById(id);
-        service.delete(mbUser.getId());
+        service.delete(id);
     }
 }

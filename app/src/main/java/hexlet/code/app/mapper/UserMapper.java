@@ -29,7 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE
 )
-public abstract class UserMapper {
+public abstract class UserMapper implements BaseMapper<User, UserDTO, UserCreateDTO, UserUpdateDTO> {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -40,7 +40,8 @@ public abstract class UserMapper {
      * @param model the {@link User} entity to map.
      * @return the corresponding {@link UserDTO}.
      */
-    public abstract UserDTO map(User model);
+    @Override
+    public abstract UserDTO mapToDTO(User model);  // исправлено
 
     /**
      * Maps a {@link UserCreateDTO} to a {@link User} entity.
@@ -48,7 +49,8 @@ public abstract class UserMapper {
      * @param createDTO the {@link UserCreateDTO} to map.
      * @return the corresponding {@link User} entity.
      */
-    public abstract User map(UserCreateDTO createDTO);
+    @Override
+    public abstract User mapToEntity(UserCreateDTO createDTO); // исправлено
 
     /**
      * Updates an existing {@link User} entity using data from a {@link UserUpdateDTO}.
@@ -57,6 +59,7 @@ public abstract class UserMapper {
      * @param updateDTO the {@link UserUpdateDTO} containing the updated data.
      * @param user      the {@link User} entity to update.
      */
+    @Override
     @Mapping(target = "password", qualifiedByName = "encodePasswordIfPresent")
     public abstract void update(UserUpdateDTO updateDTO, @MappingTarget User user);
 
@@ -82,5 +85,4 @@ public abstract class UserMapper {
     String encodePasswordIfPresent(JsonNullable<String> password) {
         return (password != null && password.isPresent()) ? passwordEncoder.encode(password.get()) : null;
     }
-
 }

@@ -3,7 +3,6 @@ package hexlet.code.app.controller.api;
 import hexlet.code.app.dto.security.AuthRequest;
 import hexlet.code.app.service.security.AuthenticationService;
 import lombok.AllArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @AllArgsConstructor
-@Log4j2
 public class AuthenticationController {
     private AuthenticationService authenticationService;
 

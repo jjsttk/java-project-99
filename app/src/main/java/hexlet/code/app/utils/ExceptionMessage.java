@@ -1,12 +1,12 @@
 package hexlet.code.app.utils;
 
 public class ExceptionMessage {
-
-    public static String userNotFoundMessage(Long id) {
-        return "User with id %d not found".formatted(id);
+    public static String entityNotFoundMessage(Class<?> entityClass, Long id) {
+        return "%s with id %d not found".formatted(entityClass.getSimpleName(), id);
     }
 
-    public static String taskStatusNotFoundMessage(Long id) {
-        return "Task status with id %d not found".formatted(id);
+    public static String entityNotFoundMessage(Class<?> entityClass, String slug) {
+        return "%s with slug %s not found".formatted(entityClass.getSimpleName(), slug);
     }
+
 }

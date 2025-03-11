@@ -2,9 +2,6 @@ package hexlet.code.app.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.app.dto.security.AuthRequest;
-import hexlet.code.app.repository.UserRepository;
-import hexlet.code.app.util.ModelGenerator;
-import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,20 +14,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@Log4j2
 @AutoConfigureMockMvc
-public class AuthenticationControllerTest {
+class AuthenticationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private ModelGenerator modelGenerator;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Test
     public void testLogin() throws Exception {
@@ -66,6 +56,5 @@ public class AuthenticationControllerTest {
 
         var response = mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
-
     }
 }

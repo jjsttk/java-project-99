@@ -3,6 +3,7 @@ package hexlet.code.app.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.app.dto.user.UserCreateDTO;
 import hexlet.code.app.dto.user.UserUpdateDTO;
+import hexlet.code.app.exception.ResourceNotFoundException;
 import hexlet.code.app.model.User;
 import hexlet.code.app.repository.UserRepository;
 import hexlet.code.app.service.user.UserService;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -65,8 +67,18 @@ class UserControllerTest {
     }
 
     @Test
+    public void testResourceNotFoundException() {
+        Exception exception = assertThrows(ResourceNotFoundException.class, () -> {
+            userService.getById(9999L);
+        });
+        assertThat(exception.getMessage()).isEqualTo("User with id 9999 not found");
+    }
+
+    @Test
     @Transactional
     public void testIndexWithAuthorization() throws Exception {
+        var beforeAddCounter = userRepository.count();
+
         var firstModel = userRepository.save(testFullFieldsUserModel);
         var secondModel = userRepository.save(testOnlyReqFieldsUserModel);
 
@@ -76,9 +88,12 @@ class UserControllerTest {
 
         var body = result.getResponse().getContentAsString();
 
-        // Expected 3 not 2, coz of we create +1 user (Admin) in DataInitializer.class"
-        assertThatJson(body).isArray().hasSize(3);
-        assertThatJson(body).inPath("[1]").and(
+        var expectedSize = (int) beforeAddCounter + 2;
+        assertThatJson(body).isArray().hasSize(expectedSize);
+
+        var jsonIndexOfFirstTestedModel = String.format("[%d]", beforeAddCounter);
+        var jsonIndexOfSecondTestedModel = String.format("[%d]", beforeAddCounter + 1);
+        assertThatJson(body).inPath(jsonIndexOfFirstTestedModel).and(
                 v -> v.node("id").isEqualTo(testFullFieldsUserModel.getId()),
                 v -> v.node("email").isEqualTo(testFullFieldsUserModel.getEmail()),
                 v -> v.node("firstName").isEqualTo(testFullFieldsUserModel.getFirstName()),
@@ -86,7 +101,7 @@ class UserControllerTest {
                 v -> v.node("createdAt").isNotNull()
         );
 
-        assertThatJson(body).inPath("[2]").and(
+        assertThatJson(body).inPath(jsonIndexOfSecondTestedModel).and(
                 v -> v.node("id").isEqualTo(testOnlyReqFieldsUserModel.getId()),
                 v -> v.node("email").isEqualTo(testOnlyReqFieldsUserModel.getEmail()),
                 v -> v.node("createdAt").isNotNull()
@@ -209,7 +224,7 @@ class UserControllerTest {
 
     @Test
     @Transactional
-    public void testCreateUserWithCreateDTO() throws Exception {
+    public void testCreateUserWithFullFilledCreateDTO() throws Exception {
         var model = testFullFieldsUserModel;
         var userCreateDTO = new UserCreateDTO();
         userCreateDTO.setFirstName(model.getFirstName());
@@ -229,6 +244,30 @@ class UserControllerTest {
         assertThat(user).isNotNull();
         assertThat(user.getFirstName()).isEqualTo(userCreateDTO.getFirstName());
         assertThat(user.getLastName()).isEqualTo(userCreateDTO.getLastName());
+        assertThat(user.getEmail()).isEqualTo(userCreateDTO.getEmail());
+        assertThat(user.getPassword()).isNotEqualTo(userCreateDTO.getPassword());
+    }
+
+    @Test
+    @Transactional
+    public void testCreateUserWithOnlyReqFilledCreateDTO() throws Exception {
+        var model = testOnlyReqFieldsUserModel;
+        var userCreateDTO = new UserCreateDTO();
+        userCreateDTO.setEmail(model.getEmail());
+        userCreateDTO.setPassword(model.getPassword());
+
+        var request = post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(userCreateDTO));
+
+        mockMvc.perform(request)
+                .andExpect(status().isCreated());
+
+        var user = userRepository.findByEmail(userCreateDTO.getEmail()).get();
+
+        assertThat(user).isNotNull();
+        assertThat(user.getFirstName()).isEqualTo("");
+        assertThat(user.getLastName()).isEqualTo("");
         assertThat(user.getEmail()).isEqualTo(userCreateDTO.getEmail());
         assertThat(user.getPassword()).isNotEqualTo(userCreateDTO.getPassword());
     }
