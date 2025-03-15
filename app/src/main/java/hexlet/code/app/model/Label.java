@@ -16,25 +16,20 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "task_statuses")
+@Table(name = "labels")
 @Data
 @EntityListeners(AuditingEntityListener.class)
-public class TaskStatus implements BaseEntity {
+public class Label implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Size(min = 1)
-    private String name;
-
-    @NotBlank
-    @Size(min = 1)
     @Column(unique = true)
-    private String slug;
+    @NotBlank
+    @Size(min = 3, max = 1000)
+    private String name;
 
     @CreatedDate
     private LocalDate createdAt;
-
 }

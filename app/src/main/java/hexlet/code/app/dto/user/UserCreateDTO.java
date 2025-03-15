@@ -7,14 +7,13 @@ import lombok.Data;
 
 @Data
 public class UserCreateDTO {
+    @Email
+    private String email;
 
     private String firstName;
     private String lastName;
 
-    @Email
-    private String email;
-
-    @Size(min = 3)
+    @Size(min = 3, max = 100)
     @NotBlank
     private String password;
 }

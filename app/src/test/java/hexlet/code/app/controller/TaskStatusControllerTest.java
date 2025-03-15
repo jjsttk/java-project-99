@@ -8,7 +8,6 @@ import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.service.task.status.TaskStatusService;
 import hexlet.code.app.util.ModelGenerator;
-import lombok.extern.log4j.Log4j2;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import java.util.List;
 
-@Log4j2
 @SpringBootTest
 @AutoConfigureMockMvc
 class TaskStatusControllerTest {
@@ -60,7 +58,7 @@ class TaskStatusControllerTest {
 
     @Test
     public void modelGenerateTest() {
-        assertThat(testModels.size()).isEqualTo(ModelGenerator.TASK_STATUS_MODELS_COUNT);
+        assertThat(testModels.size()).isEqualTo(ModelGenerator.TASK_STATUS_MODELS_TO_GENERATE);
     }
 
     @Test
@@ -329,8 +327,6 @@ class TaskStatusControllerTest {
         var model = repository.save(testModels.getFirst());
 
         var updateDTO = new TaskStatusUpdateDTO();
-        var newName = "Updated name";
-        var newSlug = "updated_slug";
         updateDTO.setName(JsonNullable.of("Updated name"));
         updateDTO.setSlug(JsonNullable.of("updated_slug"));
 
@@ -367,9 +363,5 @@ class TaskStatusControllerTest {
         assertThat(repository.findBySlug(model.getSlug())).isNotEmpty();
         assertThat(repository.findById(model.getId())).isNotEmpty();
     }
-
-    // TODO: delete method tests with db and mock
-
-
 
 }

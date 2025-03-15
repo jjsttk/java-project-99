@@ -1,7 +1,9 @@
 package hexlet.code.app.util;
 
+import hexlet.code.app.model.Label;
 import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.model.User;
+import hexlet.code.app.model.Task;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,9 +23,12 @@ public class ModelGenerator {
     private Model<User> onlyReqFieldsUserModel;
     private Model<User> nonValidDataInFieldsUserModel;
     private Model<List<TaskStatus>> validTaskStatuses;
-    private Model<User> testAdmin;
+    private Model<Task> taskWithToReviewTaskStatus;
+    private Model<Task> taskWithDraftTaskStatus;
 
-    public static final int TASK_STATUS_MODELS_COUNT = 5;
+    private Model<List<Label>> labels;
+
+    public static final int TASK_STATUS_MODELS_TO_GENERATE = 5;
 
     @Autowired
     @Getter(AccessLevel.NONE)
@@ -31,20 +36,16 @@ public class ModelGenerator {
 
     @PostConstruct
     private void init() {
-        testAdmin = buildTestAdmin();
-
         fullFieldsUserModel = buildFullFieldsUserModel();
         onlyReqFieldsUserModel = buildOnlyReqFieldsUserModel();
         nonValidDataInFieldsUserModel = buildNonValidDataInFieldsUserModel();
         validTaskStatuses = buildValidTaskStatuses();
-    }
 
-    private Model<User> buildTestAdmin() {
-        return Instancio.of(User.class)
-                .ignore(Select.field(User::getId))
-                .supply(Select.field(User::getEmail), () -> "admin@test.com")
-                .supply(Select.field(User::getPassword), () -> "qwerty")
-                .toModel();
+        taskWithToReviewTaskStatus = buildTaskWithToReviewTaskStatus();
+        taskWithDraftTaskStatus = buildTaskWithDraftTaskStatus();
+
+        labels = buildTestLabels(5);
+
     }
 
     private Model<User> buildFullFieldsUserModel() {
@@ -75,8 +76,48 @@ public class ModelGenerator {
 
     private Model<List<TaskStatus>> buildValidTaskStatuses() {
         return Instancio.ofList(TaskStatus.class)
-                .size(TASK_STATUS_MODELS_COUNT)
+                .size(TASK_STATUS_MODELS_TO_GENERATE)
                 .ignore(Select.field(TaskStatus::getId))
+                .toModel();
+    }
+
+    private Model<TaskStatus> buildDraftTestTaskStatus() {
+        return Instancio.of(TaskStatus.class)
+                .ignore(Select.field(TaskStatus::getId))
+                .supply(Select.field(TaskStatus::getName), () -> faker.name().title())
+                .supply(Select.field(TaskStatus::getSlug), () -> "draft_test")
+                .toModel();
+    }
+
+    private Model<TaskStatus> buildToReviewTestTaskStatus() {
+        return Instancio.of(TaskStatus.class)
+                .ignore(Select.field(TaskStatus::getId))
+                .supply(Select.field(TaskStatus::getName), () -> faker.name().title())
+                .supply(Select.field(TaskStatus::getSlug), () -> "to_review_test")
+                .toModel();
+    }
+
+    private Model<Task> buildTaskWithToReviewTaskStatus() {
+        return Instancio.of(Task.class)
+                .ignore(Select.field(Task::getId))
+                .supply(Select.field(Task::getAssignee), this::buildOnlyReqFieldsUserModel)
+                .supply(Select.field(Task::getTaskStatus), this::buildToReviewTestTaskStatus)
+                .toModel();
+    }
+
+    private Model<Task> buildTaskWithDraftTaskStatus() {
+        return Instancio.of(Task.class)
+                .ignore(Select.field(Task::getId))
+                .supply(Select.field(Task::getAssignee), this::buildOnlyReqFieldsUserModel)
+                .supply(Select.field(Task::getTaskStatus), this::buildDraftTestTaskStatus)
+                .toModel();
+    }
+
+    private Model<List<Label>> buildTestLabels(int count) {
+        return Instancio.ofList(Label.class)
+                .size(count)
+                .ignore(Select.field(Label::getId))
+                .supply(Select.field(Label::getName), () -> faker.gameOfThrones().character())
                 .toModel();
     }
 
@@ -84,4 +125,5 @@ public class ModelGenerator {
         int length = faker.number().numberBetween(minLength, maxLength);
         return faker.lorem().characters(length);
     }
+
 }

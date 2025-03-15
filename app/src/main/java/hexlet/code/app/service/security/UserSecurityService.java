@@ -28,6 +28,7 @@ public final class UserSecurityService {
             return null;
         }
         var email = authentication.getName();
-        return userRepository.findByEmail(email).get();
+        var mbUser = userRepository.findByEmail(email);
+        return mbUser.orElse(null);
     }
 }

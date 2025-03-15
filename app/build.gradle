@@ -5,7 +5,13 @@ plugins {
 	id 'checkstyle'
 	id 'jacoco'
 	id'io.freefair.lombok' version '8.12.2'
+	id 'io.sentry.jvm.gradle' version '5.3.0'
 }
+
+ext {
+	sentryVersion = "8.3.0"
+}
+
 
 group = 'hexlet.code'
 version = '0.0.1-SNAPSHOT'
@@ -32,13 +38,16 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.1'
+	implementation 'io.sentry:sentry-spring-boot-starter-jakarta'
 
-	implementation'net.datafaker:datafaker:2.3.0'
-	implementation'org.instancio:instancio-junit:5.0.2'
-	implementation'org.openapitools:jackson-databind-nullable:0.2.6'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2'
 
-	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+
+	implementation 'net.datafaker:datafaker:2.3.0'
+	implementation 'org.instancio:instancio-junit:5.0.2'
+	implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+
 	implementation 'org.springframework.boot:spring-boot-configuration-processor'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -52,6 +61,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
@@ -61,5 +71,26 @@ tasks.named('jacocoTestReport') {
 		xml.required.set(true)
 	}
 }
+
+sentry {
+	includeSourceContext = true
+
+	org = "konstantinov-u5"
+	projectName = "java-spring-boot"
+	authToken = System.getenv("SENTRY_AUTH_TOKEN")
+
+	if (System.getenv("SENTRY_AUTH_TOKEN") == null) {
+		tasks.named("sentryBundleSourcesJava").configure { enabled = false }
+	}
+}
+
+
+
+dependencyManagement {
+	imports {
+		mavenBom "io.sentry:sentry-bom:$sentryVersion"
+	}
+}
+
 
 

@@ -1,4 +1,4 @@
-package hexlet.code.app.component;
+package hexlet.code.app.component.property;
 
 import lombok.Getter;
 import lombok.Setter;
