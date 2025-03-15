@@ -13,6 +13,7 @@ import hexlet.code.app.repository.UserRepository;
 import hexlet.code.app.service.task.TaskService;
 import hexlet.code.app.service.task.status.TaskStatusService;
 import hexlet.code.app.service.user.UserService;
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Log4j2
 @SpringBootTest
 @AutoConfigureMockMvc
 class TaskControllerTest {
@@ -402,11 +404,42 @@ class TaskControllerTest {
 
     @Test
     @Transactional
+    public void testDeleteUserIfUserNotAssignedInTask() {
+        var task = tasks.getFirst();
+        userRepository.save(task.getAssignee());
+        taskStatusRepository.save(task.getTaskStatus());
+        taskRepository.save(task);
+
+        var userNotAssignedInTask = new User();
+        userNotAssignedInTask.setEmail("qwe@test.com");
+        userNotAssignedInTask.setPassword("12345");
+        userRepository.save(userNotAssignedInTask);
+
+        var userIdNotAssignedInTask = userNotAssignedInTask.getId();
+        var userIdAssignedInTask = task.getAssignee().getId();
+
+        Exception exception = assertThrows(IllegalStateException.class, () -> userService.delete(userIdAssignedInTask));
+        assertThat(exception.getMessage()).isEqualTo(
+                "Cannot delete user with id = " + userIdAssignedInTask
+                        + " ,because user was assigned to at least one task.");
+
+        var userNotAssignedInTaskFromDB = userRepository.findById(userIdNotAssignedInTask);
+        assertThat(userNotAssignedInTaskFromDB).isPresent();
+        assertThat(userNotAssignedInTaskFromDB.get().getEmail()).isEqualTo("qwe@test.com");
+        userRepository.deleteById(userIdNotAssignedInTask);
+        assertThat(userRepository.findById(userIdNotAssignedInTask)).isEmpty();
+    }
+
+
+
+    @Test
+    @Transactional
     public void testDeleteTaskStatusIfTaskStatusAssignedInTask() {
         var task = tasks.getFirst();
         task.setAssignee(null);
 
         taskStatusRepository.save(task.getTaskStatus());
+        log.info("this status in task: {}", task.getTaskStatus().toString());
         taskRepository.save(task);
 
         var taskStatusId = task.getTaskStatus().getId();
@@ -415,6 +448,35 @@ class TaskControllerTest {
                 "Cannot delete task status with id = " + taskStatusId
                         + " , because it is used in at least one task.");
     }
+
+    @Test
+    @Transactional
+    public void testDeleteTaskStatusIfTaskStatusNotAssignedInTask() {
+        var task = tasks.getFirst();
+        task.setAssignee(null);
+
+        taskStatusRepository.save(task.getTaskStatus());
+
+        var unBindedTaskStatus = new TaskStatus();
+        unBindedTaskStatus.setName("test name");
+        unBindedTaskStatus.setSlug("our_test_slug_to_delete");
+        taskStatusRepository.save(unBindedTaskStatus);
+        taskRepository.save(task);
+
+        var taskStatusId = task.getTaskStatus().getId();
+        Exception exception = assertThrows(IllegalStateException.class, () -> taskStatusService.delete(taskStatusId));
+        assertThat(exception.getMessage()).isEqualTo(
+                "Cannot delete task status with id = " + taskStatusId
+                        + " , because it is used in at least one task.");
+
+        assertThat(taskStatusRepository.findById(unBindedTaskStatus.getId())).isPresent();
+        assertThat(task.getTaskStatus().getId()).isNotEqualTo(unBindedTaskStatus.getId());
+
+        taskStatusService.delete(unBindedTaskStatus.getId());
+        assertThat(taskStatusRepository.findById(unBindedTaskStatus.getId())).isEmpty();
+    }
+
+
 
 
 
