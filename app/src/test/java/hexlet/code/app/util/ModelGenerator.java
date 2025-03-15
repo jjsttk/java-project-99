@@ -2,6 +2,7 @@ package hexlet.code.app.util;
 
 import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.model.User;
+import hexlet.code.app.model.Task;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,9 +22,18 @@ public class ModelGenerator {
     private Model<User> onlyReqFieldsUserModel;
     private Model<User> nonValidDataInFieldsUserModel;
     private Model<List<TaskStatus>> validTaskStatuses;
+
+    private List<Task> tasks;
+    private Model<TaskStatus> draftTestTaskStatus;
+    private Model<TaskStatus> toReviewTestTaskStatus;
+
+
     private Model<User> testAdmin;
 
-    public static final int TASK_STATUS_MODELS_COUNT = 5;
+
+
+
+    public static final int TASK_STATUS_MODELS_TO_GENERATE = 5;
 
     @Autowired
     @Getter(AccessLevel.NONE)
@@ -31,20 +41,14 @@ public class ModelGenerator {
 
     @PostConstruct
     private void init() {
-        testAdmin = buildTestAdmin();
-
         fullFieldsUserModel = buildFullFieldsUserModel();
         onlyReqFieldsUserModel = buildOnlyReqFieldsUserModel();
         nonValidDataInFieldsUserModel = buildNonValidDataInFieldsUserModel();
         validTaskStatuses = buildValidTaskStatuses();
-    }
 
-    private Model<User> buildTestAdmin() {
-        return Instancio.of(User.class)
-                .ignore(Select.field(User::getId))
-                .supply(Select.field(User::getEmail), () -> "admin@test.com")
-                .supply(Select.field(User::getPassword), () -> "qwerty")
-                .toModel();
+        toReviewTestTaskStatus = buildToReviewTestTaskStatus();
+        draftTestTaskStatus = buildDraftTestTaskStatus();
+        tasks = buildTasks();
     }
 
     private Model<User> buildFullFieldsUserModel() {
@@ -75,13 +79,47 @@ public class ModelGenerator {
 
     private Model<List<TaskStatus>> buildValidTaskStatuses() {
         return Instancio.ofList(TaskStatus.class)
-                .size(TASK_STATUS_MODELS_COUNT)
+                .size(TASK_STATUS_MODELS_TO_GENERATE)
                 .ignore(Select.field(TaskStatus::getId))
                 .toModel();
+    }
+
+    private Model<TaskStatus> buildDraftTestTaskStatus() {
+        return Instancio.of(TaskStatus.class)
+                .ignore(Select.field(TaskStatus::getId))
+                .supply(Select.field(TaskStatus::getName), () -> faker.name().title())
+                .supply(Select.field(TaskStatus::getSlug), () -> "draft_test")
+                .toModel();
+    }
+
+    private Model<TaskStatus> buildToReviewTestTaskStatus() {
+        return Instancio.of(TaskStatus.class)
+                .ignore(Select.field(TaskStatus::getId))
+                .supply(Select.field(TaskStatus::getName), () -> faker.name().title())
+                .supply(Select.field(TaskStatus::getSlug), () -> "to_review_test")
+                .toModel();
+    }
+
+    private List<Task> buildTasks() {
+        var taskWithDraftTaskStatus = Instancio.of(Task.class)
+                .ignore(Select.field(Task::getId))
+                .supply(Select.field(Task::getAssignee), () -> Instancio.create(onlyReqFieldsUserModel))
+                .supply(Select.field(Task::getTaskStatus), () -> Instancio.create(draftTestTaskStatus))
+                .create();
+
+        var taskWithToReviewTaskStatus = Instancio.of(Task.class)
+                .ignore(Select.field(Task::getId))
+                .supply(Select.field(Task::getAssignee), () -> Instancio.create(onlyReqFieldsUserModel))
+                .supply(Select.field(Task::getTaskStatus), () -> Instancio.create(toReviewTestTaskStatus))
+                .create();
+
+        return List.of(taskWithDraftTaskStatus, taskWithToReviewTaskStatus);
+
     }
 
     private String generatePassword(int minLength, int maxLength) {
         int length = faker.number().numberBetween(minLength, maxLength);
         return faker.lorem().characters(length);
     }
+
 }
