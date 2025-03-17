@@ -41,7 +41,7 @@ public abstract class UserMapper implements BaseMapper<User, UserDTO, UserCreate
      * @return the corresponding {@link UserDTO}.
      */
     @Override
-    public abstract UserDTO mapToDTO(User model);  // исправлено
+    public abstract UserDTO mapToDTO(User model);
 
     /**
      * Maps a {@link UserCreateDTO} to a {@link User} entity.
@@ -50,7 +50,8 @@ public abstract class UserMapper implements BaseMapper<User, UserDTO, UserCreate
      * @return the corresponding {@link User} entity.
      */
     @Override
-    public abstract User mapToEntity(UserCreateDTO createDTO); // исправлено
+    @Mapping(target = "password", qualifiedByName = "encodePassword")
+    public abstract User mapToEntity(UserCreateDTO createDTO);
 
     /**
      * Updates an existing {@link User} entity using data from a {@link UserUpdateDTO}.
@@ -60,19 +61,8 @@ public abstract class UserMapper implements BaseMapper<User, UserDTO, UserCreate
      * @param user      the {@link User} entity to update.
      */
     @Override
-    @Mapping(target = "password", qualifiedByName = "encodePasswordIfPresent")
+    @Mapping(target = "password", qualifiedByName = "encodePassword")
     public abstract void update(UserUpdateDTO updateDTO, @MappingTarget User user);
-
-    /**
-     * Encrypts the password from the {@link UserCreateDTO} before mapping it to a {@link User} entity.
-     *
-     * @param data the {@link UserCreateDTO} containing the password to encrypt.
-     */
-    @BeforeMapping
-    public void encryptPassword(UserCreateDTO data) {
-        var password = data.getPassword();
-        data.setPassword(passwordEncoder.encode(password));
-    }
 
     /**
      * Encodes the password if it is present in the {@link JsonNullable} wrapper.
@@ -81,8 +71,13 @@ public abstract class UserMapper implements BaseMapper<User, UserDTO, UserCreate
      * @param password the {@link JsonNullable} containing the password to encode.
      * @return the encoded password or {@code null} if the password is not present.
      */
-    @Named("encodePasswordIfPresent")
-    String encodePasswordIfPresent(JsonNullable<String> password) {
+    @Named("encodePassword")
+    String encodePassword(JsonNullable<String> password) {
         return (password != null && password.isPresent()) ? passwordEncoder.encode(password.get()) : null;
+    }
+
+    @Named("encodePassword")
+    String encodePassword(String password) {
+        return passwordEncoder.encode(password);
     }
 }

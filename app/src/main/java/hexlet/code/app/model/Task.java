@@ -1,27 +1,24 @@
 package hexlet.code.app.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.hibernate.annotations.Cascade;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tasks")
 @Data
 @EntityListeners(AuditingEntityListener.class)
-public final class Task {
+public final class Task implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,13 +33,23 @@ public final class Task {
     private String description;
 
     @NotNull
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "task_status_id", nullable = false)
     private TaskStatus taskStatus;
 
     @ManyToOne
+    @JoinColumn(name = "assignee_id")
     private User assignee;
 
-    @CreatedDate
-    private LocalDate createdAt;
 
+    @ManyToMany
+    @JoinTable(
+            name = "task_labels",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "label_id")
+    )
+    private List<Label> labels = new ArrayList<>();
+
+    @CreatedDate
+    private LocalDateTime createdAt;
 }

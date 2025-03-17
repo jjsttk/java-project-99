@@ -3,6 +3,7 @@ package hexlet.code.app.service;
 import hexlet.code.app.exception.ResourceNotFoundException;
 import hexlet.code.app.mapper.BaseMapper;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import hexlet.code.app.utils.ExceptionMessage;
  * @param <CreateDTO> The DTO type used for creation
  * @param <UpdateDTO> The DTO type used for updates
  */
+@Log4j2
 @AllArgsConstructor
 public abstract class BaseService<T, DTO, CreateDTO, UpdateDTO> {
     private final JpaRepository<T, Long> repository;
@@ -54,8 +56,12 @@ public abstract class BaseService<T, DTO, CreateDTO, UpdateDTO> {
      * @return The DTO representing the created entity.
      */
     public DTO create(CreateDTO createDTO) {
+        log.info("CreateDTO is: {}", createDTO.toString());
         var entity = mapper.mapToEntity(createDTO);
-        repository.save(entity);
+        log.info("Entity after map: {}", entity.toString());
+        var saved = repository.save(entity);
+        log.info("Saved = {}", saved.toString());
+        log.info("Entity now is {}", entity.toString());
         return mapper.mapToDTO(entity);
     }
 
