@@ -10,7 +10,7 @@ import hexlet.code.app.service.BaseService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class LabelService extends BaseService<Label, LabelDTO, LabelCreateDTO, LabelUpdateDTO> {
+public final class LabelService extends BaseService<Label, LabelDTO, LabelCreateDTO, LabelUpdateDTO> {
     private final LabelRepository repository;
 
     public LabelService(LabelRepository labelRepository, LabelMapper labelMapper) {

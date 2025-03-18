@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TaskService extends BaseService<Task, TaskDTO, TaskCreateDTO, TaskUpdateDTO> {
+public final class TaskService extends BaseService<Task, TaskDTO, TaskCreateDTO, TaskUpdateDTO> {
 
     public TaskService(JpaRepository<Task, Long> repository, TaskMapper mapper) {
         super(repository, mapper, Task.class);

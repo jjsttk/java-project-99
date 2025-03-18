@@ -1,9 +1,6 @@
 package hexlet.code.app.dto.task;
 
-import hexlet.code.app.model.Label;
 import lombok.Data;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
