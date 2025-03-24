@@ -8,5 +8,8 @@ Codeclimate Maintainability Badge:
 CodeClimate Test Coverage Badge:
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5121778e18b216596703/test_coverage)](https://codeclimate.com/github/jjsttk/java-project-99/test_coverage)
 
+Main check Java CI Badge:
+[![Java CI](https://github.com/jjsttk/java-project-99/actions/workflows/main-check.yml/badge.svg)](https://github.com/jjsttk/java-project-99/actions/workflows/main-check.yml)
+
 
 
