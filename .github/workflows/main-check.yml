@@ -21,29 +21,25 @@ jobs:
         #SetupGradle  
       - uses: gradle/actions/setup-gradle@v3
         with:
-          build-root-directory: app
           gradle-version: 8.7
 
         #CheckstyleMain
       - name: Gradle checkstyleMain
-        working-directory: app
         run: ./gradlew checkstyleMain
         
         #CheckstyleTest
       - name: Gradle checkstyleTest
-        working-directory: app
         run: ./gradlew checkstyleTest
 
         # Generate RSA private and public keys using OpenSSL
       - name: Generate RSA private and public keys
         run: |
-          mkdir -p app/src/main/resources/certs
-          openssl genpkey -out app/src/main/resources/certs/private.pem -algorithm RSA -pkeyopt rsa_keygen_bits:2048
-          openssl rsa -in app/src/main/resources/certs/private.pem -pubout -out app/src/main/resources/certs/public.pem
+          mkdir -p src/main/resources/certs
+          openssl genpkey -out src/main/resources/certs/private.pem -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+          openssl rsa -in src/main/resources/certs/private.pem -pubout -out src/main/resources/certs/public.pem
 
         #GradleTest
       - name: Gradle test
-        working-directory: app
         run: ./gradlew test
 
         #SendCodeCoverageToCodeClimate
@@ -51,10 +47,9 @@ jobs:
         uses: paambaati/codeclimate-action@v9.0.0
         env:
           CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
-          JACOCO_SOURCE_PATH: ${{github.workspace}}/app/src/main/java
+          JACOCO_SOURCE_PATH: ${{github.workspace}}/src/main/java
         with:
-          workingDirectory: app
-          prefix: ${{github.workspace}}/app
+          prefix: ${{github.workspace}}
           coverageCommand: ./gradlew jacocoTestReport
-          coverageLocations: ${{github.workspace}}/app/build/reports/jacoco/test/jacocoTestReport.xml:jacoco
+          coverageLocations: ${{github.workspace}}/build/reports/jacoco/test/jacocoTestReport.xml:jacoco
           
