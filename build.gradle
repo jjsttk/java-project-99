@@ -38,7 +38,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-	implementation 'io.sentry:sentry-spring-boot-starter-jakarta'
 
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2'
 
@@ -78,10 +77,10 @@ sentry {
 	org = "konstantinov-u5"
 	projectName = "java-spring-boot"
 	authToken = System.getenv("SENTRY_AUTH_TOKEN")
+}
 
-	if (System.getenv("SENTRY_AUTH_TOKEN") == null) {
-		tasks.named("sentryBundleSourcesJava").configure { enabled = false }
-	}
+tasks.sentryBundleSourcesJava {
+	enabled = System.getenv("SENTRY_AUTH_TOKEN") != null
 }
 
 
