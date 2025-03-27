@@ -8,7 +8,6 @@ import hexlet.code.model.Label;
 import hexlet.code.repository.LabelRepository;
 import hexlet.code.service.task.label.LabelService;
 import hexlet.code.util.ModelGenerator;
-import lombok.extern.log4j.Log4j2;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +17,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
-@Log4j2
 @SpringBootTest
 @AutoConfigureMockMvc
 class LabelControllerTest {
@@ -60,14 +57,12 @@ class LabelControllerTest {
     @BeforeEach
     public void setup() {
         labels = Instancio.of(generator.getLabels()).create();
+        labelRepository.deleteAll();
     }
 
     @Test
-    @Transactional
     public void testIndexWithAuth() throws Exception {
-        var countBeforeSave = labelRepository.count();
         var savedLabels = labelRepository.saveAll(labels);
-        var totalSize = countBeforeSave + savedLabels.size();
         var request = get("/api/labels").with(jwt());
         var response = mockMvc.perform(request)
                 .andExpect(status().isOk())
@@ -75,11 +70,10 @@ class LabelControllerTest {
                 .getResponse();
         var body = response.getContentAsString();
 
-        assertThatJson(body).isArray().hasSize((int) totalSize);
+        assertThatJson(body).isArray().hasSize(savedLabels.size());
     }
 
     @Test
-    @Transactional
     public void testIndexWithoutAuth() throws Exception {
         labelRepository.saveAll(labels);
         var request = get("/api/labels");
@@ -95,7 +89,6 @@ class LabelControllerTest {
     }
 
     @Test
-    @Transactional
     public void testShowWithAuth() throws Exception {
         var model = labels.getFirst();
         var saved = labelRepository.save(model);
@@ -116,7 +109,6 @@ class LabelControllerTest {
         );
     }
     @Test
-    @Transactional
     public void testShowWithoutAuth() throws Exception {
         var model = labels.getFirst();
         var saved = labelRepository.save(model);
@@ -130,7 +122,6 @@ class LabelControllerTest {
     }
 
     @Test
-    @Transactional
     public void testCreateWithoutAuth() throws Exception {
         var model = labels.getFirst();
         var request = post("/api/labels")
@@ -143,10 +134,8 @@ class LabelControllerTest {
     }
 
     @Test
-    @Transactional
     public void testCreateWithAuth() throws Exception {
         var model = labels.getFirst();
-        assertThat(labelRepository.findByName(model.getName())).isEmpty();
 
         var request = post("/api/labels")
                 .with(jwt())
@@ -159,22 +148,21 @@ class LabelControllerTest {
                 .getResponse();
         var body = response.getContentAsString();
         var mbModelFromDB = labelRepository.findByName(model.getName());
+
         assertThat(mbModelFromDB).isPresent();
         var modelFromDB = mbModelFromDB.get();
 
         assertThatJson(body).and(
                 v -> v.node("id").isEqualTo(modelFromDB.getId()),
-                v -> v.node("name").isEqualTo(modelFromDB.getName()),
+                v -> v.node("name").isEqualTo(model.getName()),
                 v -> v.node("createdAt").isNotNull()
         );
     }
 
     @Test
-    @Transactional
     public void testUpdateWithoutAuth() throws Exception {
         var model = labels.getFirst();
         var savedModel = labelRepository.save(model);
-        assertThat(labelRepository.findByName(savedModel.getName())).isPresent();
 
         var updateDTO = new LabelUpdateDTO();
         updateDTO.setName(JsonNullable.of("newTestName"));
@@ -190,11 +178,9 @@ class LabelControllerTest {
     }
 
     @Test
-    @Transactional
     public void testUpdateWithAuth() throws Exception {
         var model = labels.getFirst();
         var savedModel = labelRepository.save(model);
-        assertThat(labelRepository.findByName(savedModel.getName())).isPresent();
 
         var updateDTO = new LabelUpdateDTO();
         updateDTO.setName(JsonNullable.of("newTestName"));
@@ -224,11 +210,9 @@ class LabelControllerTest {
     }
 
     @Test
-    @Transactional
     public void testDeleteWithoutAuth() throws Exception {
         var model = labels.getFirst();
         var savedModel = labelRepository.save(model);
-        assertThat(labelRepository.findByName(savedModel.getName())).isPresent();
 
         var request = delete("/api/labels/{id}", savedModel.getId());
         var response = mockMvc.perform(request)
@@ -239,11 +223,9 @@ class LabelControllerTest {
     }
 
     @Test
-    @Transactional
     public void testDeleteWithAuth() throws Exception {
         var model = labels.getFirst();
         var savedModel = labelRepository.save(model);
-        assertThat(labelRepository.findByName(savedModel.getName())).isPresent();
 
         var request = delete("/api/labels/{id}",
                 savedModel.getId()).with(jwt());
@@ -253,6 +235,5 @@ class LabelControllerTest {
                 .getResponse();
 
         assertThat(labelRepository.findById(savedModel.getId())).isEmpty();
-        assertThat(labelRepository.findByName(savedModel.getName())).isEmpty();
     }
 }
