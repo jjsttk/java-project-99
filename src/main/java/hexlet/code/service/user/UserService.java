@@ -56,11 +56,6 @@ public final class UserService implements BaseService {
     }
 
     public void delete(Long id) {
-        var hasTasks = taskRepository.existsByAssigneeId(id);
-        if (hasTasks) {
-            throw new IllegalStateException("Cannot delete user with id = " + id
-                    + " ,because user was assigned to at least one task.");
-        }
         userRepository.deleteById(id);
     }
 }

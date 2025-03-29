@@ -55,12 +55,6 @@ public final class LabelService implements BaseService {
     }
 
     public void delete(Long id) {
-        var hasTasks = taskRepository.existsByLabelsId(id);
-        if (hasTasks) {
-            throw new IllegalStateException(
-                    "Cannot delete label with id = " + id
-                            + " , because it is used in at least one task.");
-        }
         labelRepository.deleteById(id);
     }
 }

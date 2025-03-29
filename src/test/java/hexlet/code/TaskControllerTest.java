@@ -24,6 +24,7 @@ import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -510,10 +511,7 @@ class TaskControllerTest {
         var task = tasks.getFirst();
         var userId = task.getAssignee().getId();
 
-        Exception exception = assertThrows(IllegalStateException.class, () -> userService.delete(userId));
-        assertThat(exception.getMessage()).isEqualTo(
-                "Cannot delete user with id = " + userId
-                        + " ,because user was assigned to at least one task.");
+        assertThrows(DataIntegrityViolationException.class, () -> userService.delete(userId));
     }
 
     @Test
@@ -541,10 +539,7 @@ class TaskControllerTest {
         taskRepository.save(task);
 
         var taskStatusId = task.getTaskStatus().getId();
-        Exception exception = assertThrows(IllegalStateException.class, () -> taskStatusService.delete(taskStatusId));
-        assertThat(exception.getMessage()).isEqualTo(
-                "Cannot delete task status with id = " + taskStatusId
-                        + " , because it is used in at least one task.");
+        assertThrows(DataIntegrityViolationException.class, () -> taskStatusService.delete(taskStatusId));
     }
 
     @Test
@@ -572,11 +567,8 @@ class TaskControllerTest {
         task.addLabel(assignedLabel);
         taskRepository.save(task);
 
-        Exception exception = assertThrows(IllegalStateException.class,
+        assertThrows(DataIntegrityViolationException.class,
                 () -> labelService.delete(assignedLabel.getId()));
-        assertThat(exception.getMessage()).isEqualTo(
-                "Cannot delete label with id = " + assignedLabel.getId()
-                        + " , because it is used in at least one task.");
     }
 
     @Test

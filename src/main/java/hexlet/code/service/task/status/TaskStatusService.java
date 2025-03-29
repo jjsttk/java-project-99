@@ -58,12 +58,6 @@ public final class TaskStatusService implements BaseService {
     }
 
     public void delete(Long id) {
-        var hasTasks = taskRepository.existsByTaskStatusId(id);
-        if (hasTasks) {
-            throw new IllegalStateException(
-                    "Cannot delete task status with id = " + id
-                            + " , because it is used in at least one task.");
-        }
         taskStatusRepository.deleteById(id);
     }
 
